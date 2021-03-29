@@ -1,6 +1,9 @@
 [vk_bot_data]
-TOKEN = "88c94357228fe11170d280783a866ff40d226334bcac34cf5edc8f2563c9aa1fb0f9df566b971f3813cfb"
+VK_TOKEN = "88c94357228fe11170d280783a866ff40d226334bcac34cf5edc8f2563c9aa1fb0f9df566b971f3813cfb"
 GROUP_ID = 202597974
+
 [save_files_data]
 SAVE_PATH = "not_translated_images/"
-[tesseract]
+
+[lingvanex_api]
+LING_TOKEN = "a_gOZD4Z1urbiAvgfPjuCIzMOArpW35p6MPg2Wz49qktE7QvqiH7loxIRs92RTWDzBFozmGgxBu16BBZE6"
