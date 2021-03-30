@@ -13,7 +13,7 @@ import json
 import config_parser
 from translate_provider import Translator
 from langdetect import detect
-
+import serializer
 
 
 SAVE_PATH = config_parser.SAVE_PATH
@@ -42,6 +42,12 @@ def make_queue_of_process_images(save_path):
     list_of_not_translated_images = os.listdir(save_path)
     return [path.Path('not_translated_images/' + i).abspath() for i in list_of_not_translated_images]
 
+def get_lang_code(finded_code):
+    data = serializer._data
+    for i in data.result:
+        if i['code_alpha_1'] == finded_code:
+            return i['full_code']
+            break
 
 #Логика работы бота
 for event in longpool.listen():
@@ -73,12 +79,10 @@ for event in longpool.listen():
 
             result = pytesseract.image_to_string(img, lang='ru+eng')
             print(result)
-            lang = detect(result) + '_GB'
-            print(lang)
-            print(event.object['text'])
-            #exit()
+            lang = detect(result)
+            from_lang = get_lang_code(lang)
             try: 
-                response = Translator.translate(lang, event.object['text'], result)
+                response = Translator.translate(from_lang, event.object['text'], result)
                 vk.messages.send(user_id=event.object["from_id"],
                                  random_id=get_random_id(),
                                  message=response)
