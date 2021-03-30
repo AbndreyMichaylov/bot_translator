@@ -42,6 +42,7 @@ def make_queue_of_process_images(save_path):
     list_of_not_translated_images = os.listdir(save_path)
     return [path.Path('not_translated_images/' + i).abspath() for i in list_of_not_translated_images]
 
+#Получает полный код языка
 def get_lang_code(finded_code):
     data = serializer._data
     for i in data.result:
