@@ -11,7 +11,7 @@ from classes.translate_provider import Translator
 from classes.vk_parser import VKParser
 from classes.image_processor import ImageSaver
 from langdetect import detect
-import serializer
+import serializers
 
 
 SAVE_PATH = config_parser.SAVE_PATH
@@ -31,7 +31,7 @@ def make_queue_of_process_images(save_path):
 
 #Получает полный код языка
 def get_lang_code(finded_code):
-    data = serializer._data
+    data = serializers._data
     for i in data.result:
         if i['code_alpha_1'] == finded_code:
             return i['full_code']
