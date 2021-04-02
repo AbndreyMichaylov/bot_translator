@@ -4,6 +4,7 @@ GROUP_ID = 202597974
 
 [save_files_data]
 SAVE_PATH = "not_translated_images/"
+JSON_SAVE_PATH = "users_data/"
 
 [lingvanex_api]
 LING_TOKEN = "a_gOZD4Z1urbiAvgfPjuCIzMOArpW35p6MPg2Wz49qktE7QvqiH7loxIRs92RTWDzBFozmGgxBu16BBZE6"

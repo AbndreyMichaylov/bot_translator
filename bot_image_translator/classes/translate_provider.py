@@ -1,4 +1,4 @@
-import config_parser
+from settings import config_parser
 import json
 import requests
 

@@ -5,13 +5,11 @@ from PIL import Image
 import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from vk_api.utils import get_random_id
-import requests
-import uuid
 import path
-import requests
-import json
-import config_parser
-from translate_provider import Translator
+from settings import config_parser
+from classes.translate_provider import Translator
+from classes.vk_parser import VKParser
+from classes.image_processor import ImageSaver
 from langdetect import detect
 import serializer
 
@@ -25,31 +23,6 @@ IMAGES_QUEUE = queue.Queue()
 session = vk_api.VkApi(token=TOKEN)
 longpool =  VkBotLongPoll(vk=session, group_id=GROUP_ID, wait=1)
 vk = session.get_api()
-
-#Рекурсивно находит ссылку среди пересланных сообщений
-def get_attachment_url(fwd_message):
-    try:
-        attach = fwd_message["fwd_messages"][0]
-        return get_attachment_url(attach)
-    except KeyError or TypeError:
-        return fwd_message["attachments"][0]["photo"]["sizes"][-1]["url"]
-
-#Парсит пришедший json от вк
-def get_image_url(event_object):
-    print(get_attachment_url(event_object))
-    image_url = ''
-    try:
-        image_url = event_object.object["attachments"][0]["photo"]["sizes"][-1]["url"]
-    except:
-        image_url = get_attachment_url(event_object)
-    return image_url
-
-#Сохраняет изображение по урлу в папку по указанному пути
-def save_image_to_path(save_path, img_url):
-    image = requests.get(img_url)
-    random_name = str(uuid.uuid4()) + '.jpg'
-    with open(save_path + random_name , 'wb') as f:
-        f.write(image.content)
 
 #Создаёт список для очереди
 def make_queue_of_process_images(save_path):
@@ -67,15 +40,18 @@ def get_lang_code(finded_code):
 #Логика работы бота
 for event in longpool.listen():
     if event.type == VkBotEventType.MESSAGE_NEW:
-        if event.object["text"] == '-языки':
+        user_text = event.object["text"]
+        user_id = event.object["from_id"]
+        event_json = event.object
+        if user_text == '-языки':
             vk.messages.send(
-                user_id=event.object["from_id"],
+                user_id=user_id,
                 random_id=get_random_id(),
                 message = 'ru_RU - Русский\nen_GB - Английский'
             )
             continue
-        image_url = get_image_url(event.object)
-        save_image_to_path(SAVE_PATH, image_url)
+        image_url = VKParser.get_image_url(event.object)
+        ImageSaver.save_image_to_path(SAVE_PATH, image_url, user_id)
 
         list_of_not_translated_images = os.listdir(SAVE_PATH)
 
@@ -96,12 +72,12 @@ for event in longpool.listen():
             lang = detect(result)
             from_lang = get_lang_code(lang)
             try: 
-                response = Translator.translate(from_lang, event.object['text'], result)
-                vk.messages.send(user_id=event.object["from_id"],
+                response = Translator.translate(from_lang, user_text, result)
+                vk.messages.send(user_id=user_id,
                                  random_id=get_random_id(),
                                  message=response)
             except vk_api.exceptions.ApiError:
-                vk.messages.send(user_id=event.object["from_id"],
+                vk.messages.send(user_id=user_id,
                                  random_id=get_random_id(),
                                  message='Не могу обработать фото')
             finally:
