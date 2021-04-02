@@ -26,9 +26,23 @@ session = vk_api.VkApi(token=TOKEN)
 longpool =  VkBotLongPoll(vk=session, group_id=GROUP_ID, wait=1)
 vk = session.get_api()
 
-#Парсит пришедший json
+#Рекурсивно находит ссылку среди пересланных сообщений
+def get_attachment_url(fwd_message):
+    try:
+        attach = fwd_message["fwd_messages"][0]
+        return get_attachment_url(attach)
+    except KeyError or TypeError:
+        return fwd_message["attachments"][0]["photo"]["sizes"][-1]["url"]
+
+#Парсит пришедший json от вк
 def get_image_url(event_object):
-    return event.object["attachments"][0]["photo"]["sizes"][-1]["url"]
+    print(get_attachment_url(event_object))
+    image_url = ''
+    try:
+        image_url = event_object.object["attachments"][0]["photo"]["sizes"][-1]["url"]
+    except:
+        image_url = get_attachment_url(event_object)
+    return image_url
 
 #Сохраняет изображение по урлу в папку по указанному пути
 def save_image_to_path(save_path, img_url):
@@ -60,8 +74,7 @@ for event in longpool.listen():
                 message = 'ru_RU - Русский\nen_GB - Английский'
             )
             continue
-        image_url = get_image_url(event)
-
+        image_url = get_image_url(event.object)
         save_image_to_path(SAVE_PATH, image_url)
 
         list_of_not_translated_images = os.listdir(SAVE_PATH)
