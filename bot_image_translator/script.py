@@ -10,9 +10,9 @@ from settings import config_parser
 from classes.translate_provider import Translator
 from classes.vk_parser import VKParser
 from classes.image_processor import ImageSaver
+from classes.langs import Langs
 from langdetect import detect
-import serializers
-
+from classes.exceptions.no_photos import NoPhotosException
 
 SAVE_PATH = config_parser.SAVE_PATH
 TOKEN = config_parser.VK_TOKEN
@@ -31,18 +31,20 @@ def make_queue_of_process_images(save_path):
 
 #Получает полный код языка
 def get_lang_code(finded_code):
-    data = serializers._data
-    for i in data.result:
-        if i['code_alpha_1'] == finded_code:
-            return i['full_code']
+    data = Langs.get_langs()
+    for l in data.result:
+        if l.code_alpha_1 == finded_code:
+            return l.full_code
             break
 
 #Логика работы бота
 for event in longpool.listen():
     if event.type == VkBotEventType.MESSAGE_NEW:
+
         user_text = event.object["text"]
         user_id = event.object["from_id"]
         event_json = event.object
+
         if user_text == '-языки':
             vk.messages.send(
                 user_id=user_id,
@@ -50,23 +52,24 @@ for event in longpool.listen():
                 message = 'ru_RU - Русский\nen_GB - Английский'
             )
             continue
-        images_urls = VKParser.get_image_url(event.object)
-        ImageSaver.save_image_to_path(SAVE_PATH, image_url, user_id)
+
+        try:
+            images_urls = VKParser.get_image_url(event.object) 
+        except NoPhotosException:
+            vk.messages.send(
+                user_id=user_id,
+                random_id=get_random_id(),
+                message='Вы не отправили фотографии'
+            )
+            continue
+
+        ImageSaver.save_image_to_path(SAVE_PATH, images_urls)
 
         list_of_not_translated_images = os.listdir(SAVE_PATH)
 
-        list_of_full_paths_of_files = make_queue_of_process_images(SAVE_PATH)
-
-        #print(list_of_full_paths_of_files)
-        #Заполняет очередь обработки изображений
-        for image in list_of_full_paths_of_files:
-            IMAGES_QUEUE.put(image)
-
-        while not IMAGES_QUEUE.empty():
-            image_to_process = IMAGES_QUEUE.get()
-
-            img = Image.open(image_to_process)
-
+        for i in list_of_not_translated_images:
+            img_path = SAVE_PATH + i
+            img = Image.open(img_path)
             result = pytesseract.image_to_string(img, lang='ru+eng')
             print(result)
             lang = detect(result)
@@ -81,5 +84,5 @@ for event in longpool.listen():
                                  random_id=get_random_id(),
                                  message='Не могу обработать фото')
             finally:
-                os.remove(image_to_process)
+                os.remove(img_path)
         print('FUCK')

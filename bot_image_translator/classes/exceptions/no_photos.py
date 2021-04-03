@@ -1,0 +1,2 @@
+class NoPhotosException(Exception):
+    pass
