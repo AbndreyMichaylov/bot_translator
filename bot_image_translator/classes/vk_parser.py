@@ -8,14 +8,16 @@ class VKParser:
             attach = fwd_message["fwd_messages"][0]
             return VKParser.get_attachment_url(attach)
         except KeyError or TypeError or IndexError:
-            return fwd_message["attachments"][0]["photo"]["sizes"][-1]["url"]
+            return [p["photo"]["sizes"][-1]["url"] for p in fwd_message["attachments"]]
 
 # Парсит пришедший json от вк
 
     def get_image_url(event_object):
-        image_url = ''
         try:
-            image_url = event_object["attachments"][0]["photo"]["sizes"][-1]["url"]
+            print(event_object.count('attachments'))
+            exit()
+            images_urls = [p["photo"]["sizes"][-1]["url"] for p in event_object["attachments"]]
+            return images_urls
         except:
-            image_url = VKParser.get_attachment_url(event_object)
-        return image_url
+            images_urls = VKParser.get_attachment_url(event_object)
+            return images_urls

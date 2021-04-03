@@ -50,7 +50,7 @@ for event in longpool.listen():
                 message = 'ru_RU - Русский\nen_GB - Английский'
             )
             continue
-        image_url = VKParser.get_image_url(event.object)
+        images_urls = VKParser.get_image_url(event.object)
         ImageSaver.save_image_to_path(SAVE_PATH, image_url, user_id)
 
         list_of_not_translated_images = os.listdir(SAVE_PATH)
